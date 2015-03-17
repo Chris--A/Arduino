@@ -26,11 +26,11 @@
 #include <avr/io.h>
 
 /***
-	EERef class.
-	
-	This object references an EEPROM cell.
-	Its purpose is to mimic a typical byte of RAM, however its storage is the EEPROM.
-	This class has an overhead of two bytes, similar to storing a pointer to an EEPROM cell.
+    EERef class.
+    
+    This object references an EEPROM cell.
+    Its purpose is to mimic a typical byte of RAM, however its storage is the EEPROM.
+    This class has an overhead of two bytes, similar to storing a pointer to an EEPROM cell.
 ***/
 
 struct EERef{
@@ -49,10 +49,10 @@ struct EERef{
     EERef &operator -=( uint8_t in )     { return *this = **this - in; }
     EERef &operator *=( uint8_t in )     { return *this = **this * in; }
     EERef &operator /=( uint8_t in )     { return *this = **this / in; }
-	EERef &operator ^=( uint8_t in )     { return *this = **this ^ in; }
-	EERef &operator %=( uint8_t in )     { return *this = **this % in; }
-	EERef &operator &=( uint8_t in )     { return *this = **this & in; }
-	EERef &operator |=( uint8_t in )     { return *this = **this | in; }
+    EERef &operator ^=( uint8_t in )     { return *this = **this ^ in; }
+    EERef &operator %=( uint8_t in )     { return *this = **this % in; }
+    EERef &operator &=( uint8_t in )     { return *this = **this & in; }
+    EERef &operator |=( uint8_t in )     { return *this = **this | in; }
     EERef &operator <<=( uint8_t in )    { return *this = **this << in; }
     EERef &operator >>=( uint8_t in )    { return *this = **this >> in; }
     
@@ -77,32 +77,32 @@ struct EERef{
 };
 
 /***
-	EEPtr class.
-	
-	This object is a bidirectional pointer to EEPROM cells represented by EERef objects.
-	Just like a normal pointer type, this can be dereferenced and repositioned using 
-	increment/decrement operators.
+    EEPtr class.
+    
+    This object is a bidirectional pointer to EEPROM cells represented by EERef objects.
+    Just like a normal pointer type, this can be dereferenced and repositioned using 
+    increment/decrement operators.
 ***/
 
 struct EEPtr{
 
     EEPtr( const int index )
         : index( index )                {}
-		
+        
     operator const int() const          { return index; }
     EEPtr &operator=( int in )          { return index = in, *this; }
-	
-	
+    
+    
     //Iterator functionality.
     bool operator!=( const EEPtr &ptr ) { return index != ptr.index; }
     EERef operator*()                   { return( this->index ); }
-	
-	
-	/** Prefix increment/decrement **/
+    
+    
+    /** Prefix increment/decrement **/
     EEPtr& operator++()                 { return ++index, *this; }
-	EEPtr& operator--()                 { return --index, *this; }
-	
-	
+    EEPtr& operator--()                 { return --index, *this; }
+    
+    
     /** Postfix increment/decrement **/
     EEPtr operator++ (int){ 
         int ret = index;
@@ -113,16 +113,16 @@ struct EEPtr{
         int ret = index;
         return --index, ret;
     }
-	
+    
     int index; //Index of current EEPROM cell.
 };
 
 /***
-	EEPROMClass class.
-	
-	This object represents the entire EEPROM space.
-	It wraps the functionality of EEPtr and EERef into a basic interface.
-	This class is also 100% backwards compatible with earlier Arduino core releases.
+    EEPROMClass class.
+    
+    This object represents the entire EEPROM space.
+    It wraps the functionality of EEPtr and EERef into a basic interface.
+    This class is also 100% backwards compatible with earlier Arduino core releases.
 ***/
 
 struct EEPROMClass{
@@ -141,16 +141,16 @@ struct EEPROMClass{
     //Functionality to 'get' and 'put' objects to and from EEPROM.
     template< typename T > T &get( int idx, T &t ){
         EEPtr e = idx;
-		uint8_t *ptr = (uint8_t*) &t;
-		for( int count = sizeof(T) ; count ; --count, ++e )  *ptr++ = *e;
-		return t;
+        uint8_t *ptr = (uint8_t*) &t;
+        for( int count = sizeof(T) ; count ; --count, ++e )  *ptr++ = *e;
+        return t;
     }
     
     template< typename T > const T &put( int idx, const T &t ){
         EEPtr e = idx;
-		const uint8_t *ptr = (const uint8_t*) &t;
-		for( int count = sizeof(T) ; count ; --count, ++e )  (*e).update( *ptr++ );
-		return t;
+        const uint8_t *ptr = (const uint8_t*) &t;
+        for( int count = sizeof(T) ; count ; --count, ++e )  (*e).update( *ptr++ );
+        return t;
     }
 };
 
