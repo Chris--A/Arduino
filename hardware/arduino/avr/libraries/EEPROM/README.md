@@ -26,34 +26,34 @@ The library provides a global variable named `EEPROM`, you use this variable to 
 
 ### **Library functions**
 
-#### **`EEPROM.read( address )`** [[_example_]](examples/eeprom_read.ino)
+#### **`EEPROM.read( address )`** [[_example_]](examples/eeprom_read/eeprom_read.ino)
 
 This function allows you to read a single byte of data from the eeprom.
 Its only parameter is an `int` which should be set to the address you wish to read.
 
 The function returns an `unsigned char` containing the value read.
 
-#### **`EEPROM.write( address, value )`** [[_example_]](examples/eeprom_write.ino)
+#### **`EEPROM.write( address, value )`** [[_example_]](examples/eeprom_write/eeprom_write.ino)
 
 The `write()` method allows you to write a single byte of data to the EEPROM.
 Two parameters are needed. The first is an `int` containing the address that is to be written, and the second is a the data to be written (`unsigned char`).
 
 This function does not return any value.
 
-#### **`EEPROM.update( address, value )`** [[_example_]](examples/eeprom_update.ino)
+#### **`EEPROM.update( address, value )`** [[_example_]](examples/eeprom_update/eeprom_update.ino)
 
 This function is similar to `EEPROM.write()` however this method will only write data if the cell contents pointed to by `address` is different to `value`. This method can help prevent unnecessary wear on the EEPROM cells.
 
 This function does not return any value.
 
-#### **`EEPROM.get( address, object )`** [[_example_]](examples/eeprom_get.ino)
+#### **`EEPROM.get( address, object )`** [[_example_]](examples/eeprom_get/eeprom_get.ino)
 
 This function will retrieve any object from the EEPROM.
 Two parameters are needed to call this function. The first is an `int` containing the address that is to be written, and the second is the object you would like to read.
 
 This function returns a reference to the `object` passed in. It does not need to be used and is only returned for conveience.
 
-#### **`EEPROM.put( address, object )`** [[_example_]](examples/eeprom_put.ino)
+#### **`EEPROM.put( address, object )`** [[_example_]](examples/eeprom_put/eeprom_put.ino)
 
 This function will write any object to the EEPROM.
 Two parameters are needed to call this function. The first is an `int` containing the address that is to be written, and the second is the object you would like to write.
@@ -62,7 +62,7 @@ This function uses the _update_ method to write its data, and therefore only rew
 
 This function returns a reference to the `object` passed in. It does not need to be used and is only returned for conveience.
 
-#### **Subscript operator: `EEPROM[address]`** [[_example_]](examples/eeprom_crc.ino)
+#### **Subscript operator: `EEPROM[address]`** [[_example_]](examples/eeprom_crc/eeprom_crc.ino)
 
 This operator allows using the identifier `EEPROM` like an array.  
 EEPROM cells can be read _and_ **_written_** directly using this method.
