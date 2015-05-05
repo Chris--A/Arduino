@@ -1,7 +1,7 @@
 /*
   EEPROM.h - EEPROM library
   Version 1.0 Original Copyright (c) 2006 David A. Mellis.  All right reserved.
-  Version 2.0 Copyright (c) 2015 Christopher Andrews.
+  Version 2.0 Copyright (c) 2015 Christopher Andrews.  All right reserved.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -18,12 +18,33 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef EEPROM_h
-#define EEPROM_h
+#if defined(__AVR__) && !defined(EEPROM_h)
+  #define EEPROM_h
 
-#include <inttypes.h>
+#ifndef Arduino_h  //These includes are available through Arduino.h
+  #include <inttypes.h>
+  #include <avr/io.h>
+#endif
 #include <avr/eeprom.h>
-#include <avr/io.h>
+
+/***
+    This provides a method of generating compile time errors in C++98 (#error is unsuitable).
+    C++11 includes static_assert as a language construct.
+***/
+#if __cplusplus < 201103L || !defined(__GXX_EXPERIMENTAL_CXX0X__)
+  #ifndef static_assert
+    namespace COMPILE{
+      template< bool > struct ERROR;
+      template<> struct ERROR< true >{};
+    };
+    #define static_assert( cond, msg ) { COMPILE::ERROR<!!(cond)> msg; (void) msg; }    
+  #endif
+#else
+  #define READING_POINTERS_DISABLED_FOR_EEPROM_GET  "Storing or reading a single pointer object has been disabled in EEPROM.get() and EEPROM.put()." \
+                                                    "Add a third parameter (count of elements) to use put() and get() on blocks of data."            \
+                                                    "The count is 'elements' not bytes of data."
+  #define STORING_POINTERS_DISABLED_FOR_EEPROM_PUT READING_POINTERS_DISABLED_FOR_EEPROM_GET
+#endif
 
 /***
     EERef class.
@@ -113,7 +134,7 @@ struct EEBit{
     uint8_t mask;  //Mask of bit to read/write.
 };
 
-inline EEBit EERef::operator[]( const int bidx ) { return EEBit( index, bidx ); } //Deferred definition till EEBit is available.
+inline EEBit EERef::operator[]( const int bidx ) { return EEBit( index, bidx ); } //Deferred definition till EEBit becomes available.
 
 /***
     EEPtr class.
@@ -151,6 +172,8 @@ struct EEPtr{
     int index; //Index of current EEPROM cell.
 };
 
+inline EEPtr EERef::operator&() const { return index; } //Deferred definition till EEPtr becomes available.
+
 /***
     EEPROMClass class.
     
@@ -159,8 +182,13 @@ struct EEPtr{
     This class is also 100% backwards compatible with earlier Arduino core releases.
 ***/
 
-struct EEPROMClass{
-
+class EEPROMClass{
+  protected:
+    /*** IsPointer can allow generic template functions to discriminate based on whether a template type is a pointer. ***/
+    template <class U> struct IsPointer{ enum{ result = false }; };      //Not a pointer.
+    template <class U> struct IsPointer<U*>{ enum{ result = true }; };   //A standard pointer.
+    template <class U> struct IsPointer<U*&>{ enum{ result = true }; };  //A reference to a pointer (is still considered a pointer in usage due to reference semantics).      
+  public:
     //Basic user access methods.
     EERef operator[]( EERef ref )         { return ref; }
     EERef read( EERef ref )               { return ref; }
@@ -181,6 +209,7 @@ struct EEPROMClass{
     
     //Functionality to 'get' objects, arrays, or memory blocks from the EEPROM.
     template< typename T > T &get( EEPtr ptr, T &t ){
+        static_assert( !IsPointer<T>::result, READING_POINTERS_DISABLED_FOR_EEPROM_GET ); //Error handling: prevent a user from trying to get/put pointer types.    
         uint8_t *dest = (uint8_t*) &t;
         for( int count = sizeof(T) ; count ; --count, ++ptr ) *dest++ = *ptr;
         return t;
@@ -200,6 +229,7 @@ struct EEPROMClass{
     
     //Functionality to 'put' objects, arrays, and memory blocks into the EEPROM.
     template< typename T > const T &put( EEPtr ptr, const T &t ){
+        static_assert( !IsPointer<T>::result, STORING_POINTERS_DISABLED_FOR_EEPROM_PUT ); //Error handling: prevent a user from trying to get/put pointer types.
         const uint8_t *src = (const uint8_t*) &t;
         for( int count = sizeof(T) ; count ; --count, ++ptr ) (*ptr).update( *src++ );
         return t;
