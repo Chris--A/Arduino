@@ -167,10 +167,10 @@ struct EEPROMClass{
     void write( EERef ref, uint8_t val )  { ref = val; }
     void update( EERef ref, uint8_t val ) { ref.update( val ); }
     
-	//Bit access methods.
-	EEBit readBit( EERef ref, uint8_t bidx )                 { return ref[ bidx ]; }
-	void writeBit( EERef ref, uint8_t bidx, const bool val ) { ref[ bidx ] = val; }
-	
+    //Bit access methods.
+    EEBit readBit( EERef ref, uint8_t bidx )                 { return ref[ bidx ]; }
+    void writeBit( EERef ref, uint8_t bidx, const bool val ) { ref[ bidx ] = val; }
+    
     //STL and C++11 iteration capability.
     EEPtr begin()                        { return 0x00; }
     EEPtr end()                          { return length(); } //Standards requires this to be the item after the last valid entry. The returned pointer is invalid.
@@ -179,18 +179,43 @@ struct EEPROMClass{
     uint16_t length()                    { return E2END + 1; }
     const bool ready()                   { return eeprom_is_ready(); }
     
-    //Functionality to 'get' and 'put' objects to and from EEPROM.
-	template< typename T > T &get( EEPtr ptr, T &t ){
-		uint8_t *dest = (uint8_t*) &t;
-		for( int count = sizeof(T) ; count ; --count, ++ptr ) *dest++ = *ptr;
-		return t;
-	}
+    //Functionality to 'get' objects, arrays, or memory blocks from the EEPROM.
+    template< typename T > T &get( EEPtr ptr, T &t ){
+        uint8_t *dest = (uint8_t*) &t;
+        for( int count = sizeof(T) ; count ; --count, ++ptr ) *dest++ = *ptr;
+        return t;
+    }
     
-	template< typename T > const T &put( EEPtr ptr, const T &t ){
-		const uint8_t *src = (const uint8_t*) &t;
-		for( int count = sizeof(T) ; count ; --count, ++ptr ) (*ptr).update( *src++ );
-		return t;
-	}
+    template< typename T, unsigned N > T (&get( EEPtr ptr, T (&t)[N] ))[N]{
+        uint8_t *dest = (uint8_t*) &t;
+        for( int count = N * sizeof(T) ; count ; --count, ++ptr ) *dest++ = *ptr;
+        return t;
+    }
+    
+    template< typename T > T *get( EEPtr ptr, T *t, int length ){
+        uint8_t *dest = (uint8_t*) t;
+        for( length *= sizeof(T) ; length ; --length, ++ptr ) *dest++ = *ptr;
+        return t;
+    }    
+    
+    //Functionality to 'put' objects, arrays, and memory blocks into the EEPROM.
+    template< typename T > const T &put( EEPtr ptr, const T &t ){
+        const uint8_t *src = (const uint8_t*) &t;
+        for( int count = sizeof(T) ; count ; --count, ++ptr ) (*ptr).update( *src++ );
+        return t;
+    }
+    
+    template< typename T, unsigned N > const T (&put( EEPtr ptr, const T (&t)[N] ))[N]{
+        const uint8_t *src = (const uint8_t*) &t;
+        for( int count = N * sizeof(T) ; count ; --count, ++ptr ) (*ptr).update( *src++ );
+        return t;
+    }
+    
+    template< typename T > const T *put( EEPtr ptr, const T *t, int length ){
+        const uint8_t *src = (const uint8_t*) t;
+        for( length *= sizeof(T) ; length ; --length, ++ptr ) (*ptr).update( *src++ );
+        return t;
+    }    
 };
 
 static EEPROMClass EEPROM;
