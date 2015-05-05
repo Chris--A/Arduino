@@ -40,8 +40,8 @@
     #define static_assert( cond, msg ) { COMPILE::ERROR<!!(cond)> msg; (void) msg; }    
   #endif
 #else
-  #define READING_POINTERS_DISABLED_FOR_EEPROM_GET  "Storing or reading a single pointer object has been disabled in EEPROM.get() and EEPROM.put()." \
-                                                    "Add a third parameter (count of elements) to use put() and get() on blocks of data."            \
+  #define READING_POINTERS_DISABLED_FOR_EEPROM_GET  "Storing or reading a single pointer object has been disabled in EEPROM.get() and EEPROM.put(). " \
+                                                    "Add a third parameter (count of elements) to use put() and get() on blocks of data. "            \
                                                     "The count is 'elements' not bytes of data."
   #define STORING_POINTERS_DISABLED_FOR_EEPROM_PUT READING_POINTERS_DISABLED_FOR_EEPROM_GET
 #endif
@@ -209,44 +209,23 @@ class EEPROMClass{
     
     //Functionality to 'get' objects, arrays, or memory blocks from the EEPROM.
     template< typename T > T &get( EEPtr ptr, T &t ){
-        static_assert( !IsPointer<T>::result, READING_POINTERS_DISABLED_FOR_EEPROM_GET ); //Error handling: prevent a user from trying to get/put pointer types.    
-        uint8_t *dest = (uint8_t*) &t;
-        for( int count = sizeof(T) ; count ; --count, ++ptr ) *dest++ = *ptr;
-        return t;
+        static_assert( !IsPointer<T>::result, READING_POINTERS_DISABLED_FOR_EEPROM_GET ); //Error handling: prevent a user from trying to get/put pointer types.
+        return get( ptr, (uint8_t*) &t, sizeof(T) ), t;
     }
     
-    template< typename T, unsigned N > T (&get( EEPtr ptr, T (&t)[N] ))[N]{
-        uint8_t *dest = (uint8_t*) &t;
-        for( int count = N * sizeof(T) ; count ; --count, ++ptr ) *dest++ = *ptr;
-        return t;
-    }
-    
-    template< typename T > T *get( EEPtr ptr, T *t, int length ){
-        uint8_t *dest = (uint8_t*) t;
-        for( length *= sizeof(T) ; length ; --length, ++ptr ) *dest++ = *ptr;
-        return t;
-    }    
+    template< typename T, int N > T (&get( EEPtr ptr, T (&t)[N] ))[N] { return get( ptr, (uint8_t*) t, N * sizeof(T) ), t; }
+    template< typename T > void get( EEPtr ptr, T *t, int length )    { get( ptr, (uint8_t*) t, length * sizeof(T) ); }
+    void get( EEPtr ptr, uint8_t *t, int length )                     { for( ; length ; --length, ++ptr ) *t++ = *ptr; }    
     
     //Functionality to 'put' objects, arrays, and memory blocks into the EEPROM.
     template< typename T > const T &put( EEPtr ptr, const T &t ){
         static_assert( !IsPointer<T>::result, STORING_POINTERS_DISABLED_FOR_EEPROM_PUT ); //Error handling: prevent a user from trying to get/put pointer types.
-        const uint8_t *src = (const uint8_t*) &t;
-        for( int count = sizeof(T) ; count ; --count, ++ptr ) (*ptr).update( *src++ );
-        return t;
+        return put( ptr, (uint8_t*) &t, sizeof(T) ), t;
     }
-    
-    template< typename T, unsigned N > const T (&put( EEPtr ptr, const T (&t)[N] ))[N]{
-        const uint8_t *src = (const uint8_t*) &t;
-        for( int count = N * sizeof(T) ; count ; --count, ++ptr ) (*ptr).update( *src++ );
-        return t;
-    }
-    
-    template< typename T > const T *put( EEPtr ptr, const T *t, int length ){
-        const uint8_t *src = (const uint8_t*) t;
-        for( length *= sizeof(T) ; length ; --length, ++ptr ) (*ptr).update( *src++ );
-        return t;
-    }    
-};
 
+    template< typename T, int N > const T (&put( EEPtr ptr, const T (&t)[N] ))[N]  { return put( ptr, (uint8_t*) t, N * sizeof(T) ), t; }
+    template< typename T > void put( EEPtr ptr, const T *t, int length )           { put( ptr, (uint8_t*) t, length * sizeof(T) ); }
+    void put( EEPtr ptr, const uint8_t *t, int length )                            { for( ; length ; --length, ++ptr ) (*ptr).update( *t++ ); }       
+};
 static EEPROMClass EEPROM;
 #endif
