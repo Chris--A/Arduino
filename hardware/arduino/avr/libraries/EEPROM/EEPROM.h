@@ -34,20 +34,22 @@
 ***/
 
 struct EEBit; //Forward declaration for EERef::opreator[]
+struct EEPtr; //Forward declaration for EERef::opreator&
 
 struct EERef{
 
-    EERef( const int index )
-        : index( index )                 {}
+    template< typename T > EERef( T *ptr ) : index( (int) ptr ) {}
+    EERef( const int index ) : index( index )                   {}
     
     //Access/read members.
     uint8_t operator*() const            { return eeprom_read_byte( (uint8_t*) index ); }
     operator const uint8_t() const       { return **this; }
-    EEBit operator[]( const int bidx );
+    EEBit operator[]( const int bidx );  //Defined below EEBit
+    EEPtr operator&() const;             //Defined below EEPtr
     
     //Assignment/write members.
     EERef &operator=( const EERef &ref ) { return *this = *ref; }
-    EERef &operator=( uint8_t in )       { return eeprom_write_byte( (uint8_t*) index, in ), *this;  }
+    EERef &operator=( uint8_t in )       { return eeprom_write_byte( (uint8_t*) index, in ), *this; }
     EERef &operator +=( uint8_t in )     { return *this = **this + in; }
     EERef &operator -=( uint8_t in )     { return *this = **this - in; }
     EERef &operator *=( uint8_t in )     { return *this = **this * in; }
@@ -83,26 +85,32 @@ struct EERef{
     EEBit class.
     
     This object is a reference object similar to EERef, however it references
-	only a single bit.
+    only a single bit. Its function mimics a bool type.
 ***/
 
 struct EEBit{
 
-	//Constructor, use by passing in index of EEPROM byte, then index of bit to read.
+    //Constructor, use by passing in index of EEPROM byte, then index of bit to read.
     EEBit( int index, uint8_t bidx ) 
-        : ref( index ), bidx( 0x01 << bidx ) {}
+        : ref( index ), mask( 0x01 << bidx ) {}
 
-    operator const bool() const              { return ref & bidx; }
+    //Modifier functions.
+    EEBit &setIndex( uint8_t bidx )          { return mask = (0x01 << bidx), *this; }
+    EEBit &set()                             { return *this = true; }
+    EEBit &clear()                           { return *this = false; }
+    
+    //Read/write functions.
+    operator const bool() const              { return ref & mask; }
     EEBit &operator =( const EEBit &copy )   { return *this = ( const bool ) copy; }
-	
+    
     EEBit &operator =( const bool &copy ){
-        if( copy )  ref |= bidx;
-        else  ref &= ~bidx;
+        if( copy )  ref |= mask;
+        else  ref &= ~mask;
         return *this;
     }
-    
+
     EERef ref;     //Reference to EEPROM cell.
-    uint8_t bidx;  //Mask of bit to read/write.
+    uint8_t mask;  //Mask of bit to read/write.
 };
 
 inline EEBit EERef::operator[]( const int bidx ) { return EEBit( index, bidx ); } //Deferred definition till EEBit is available.
@@ -117,17 +125,22 @@ inline EEBit EERef::operator[]( const int bidx ) { return EEBit( index, bidx ); 
 
 struct EEPtr{
 
-    EEPtr( const int index )
-        : index( index )                {}
+    template< typename T > EEPtr( T *ptr ) : index( (int) ptr ) {}    
+    EEPtr( const int index ) : index( index )                    {}
         
+    //Pointer read/write.
     operator const int() const          { return index; }
     EEPtr &operator=( int in )          { return index = in, *this; }
+    EERef operator[]( int idx )         { return index + idx; }
     
-    EERef operator[]( const int idx )    { return index + idx; }
+    //Dreference & member access.
+    EERef operator*()                   { return index; }
+    EERef *operator->()                 { return (EERef*) this; }    
     
     //Iterator functionality.
     bool operator!=( const EEPtr &ptr ) { return index != ptr.index; }
-    EERef operator*()                   { return index; }
+    EEPtr& operator+=( int idx )        { return index += idx, *this; }
+    EEPtr& operator-=( int idx )        { return index -= idx, *this; }    
     
     /** Prefix & Postfix increment/decrement **/
     EEPtr& operator++()                 { return ++index, *this; }
@@ -149,37 +162,35 @@ struct EEPtr{
 struct EEPROMClass{
 
     //Basic user access methods.
-    EERef operator[]( const int idx )    { return idx; }
-    uint8_t read( int idx )              { return EERef( idx ); }
-    void write( int idx, uint8_t val )   { (EERef( idx )) = val; }
-    void update( int idx, uint8_t val )  { EERef( idx ).update( val ); }
-	
+    EERef operator[]( EERef ref )         { return ref; }
+    EERef read( EERef ref )               { return ref; }
+    void write( EERef ref, uint8_t val )  { ref = val; }
+    void update( EERef ref, uint8_t val ) { ref.update( val ); }
+    
 	//Bit access methods.
-	EEBit readBit( int idx, uint8_t bidx )                 { return EERef( idx )[ bidx ]; }
-	void writeBit( int idx, uint8_t bidx, const bool val ) { (EERef( idx )[ bidx ]) = val; }
+	EEBit readBit( EERef ref, uint8_t bidx )                 { return ref[ bidx ]; }
+	void writeBit( EERef ref, uint8_t bidx, const bool val ) { ref[ bidx ] = val; }
 	
     //STL and C++11 iteration capability.
     EEPtr begin()                        { return 0x00; }
     EEPtr end()                          { return length(); } //Standards requires this to be the item after the last valid entry. The returned pointer is invalid.
-	
-	//Properties and state.
+    
+    //Properties and state.
     uint16_t length()                    { return E2END + 1; }
-	const bool ready()                   { return eeprom_is_ready(); }
+    const bool ready()                   { return eeprom_is_ready(); }
     
     //Functionality to 'get' and 'put' objects to and from EEPROM.
-    template< typename T > T &get( int idx, T &t ){
-        EEPtr e = idx;
-        uint8_t *ptr = (uint8_t*) &t;
-        for( int count = sizeof(T) ; count ; --count, ++e )  *ptr++ = *e;
-        return t;
-    }
+	template< typename T > T &get( EEPtr ptr, T &t ){
+		uint8_t *dest = (uint8_t*) &t;
+		for( int count = sizeof(T) ; count ; --count, ++ptr ) *dest++ = *ptr;
+		return t;
+	}
     
-    template< typename T > const T &put( int idx, const T &t ){
-        EEPtr e = idx;
-        const uint8_t *ptr = (const uint8_t*) &t;
-        for( int count = sizeof(T) ; count ; --count, ++e )  (*e).update( *ptr++ );
-        return t;
-    }
+	template< typename T > const T &put( EEPtr ptr, const T &t ){
+		const uint8_t *src = (const uint8_t*) &t;
+		for( int count = sizeof(T) ; count ; --count, ++ptr ) (*ptr).update( *src++ );
+		return t;
+	}
 };
 
 static EEPROMClass EEPROM;
