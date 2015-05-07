@@ -155,13 +155,7 @@ unsigned char String::reserve(unsigned int size)
 unsigned int String::validate( bool remainder )
 {
 	if( !remainder ) len = 0;
-
-	int idx = len;
-
-	while( idx <= capacity && buffer[ idx ] ){
-		++idx;
-		++len;
-	}
+	while( len <= capacity && buffer[ len ] ) ++len;
 	return len;
 }
 
