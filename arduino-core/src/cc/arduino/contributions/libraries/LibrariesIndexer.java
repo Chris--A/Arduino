@@ -57,6 +57,7 @@ public class LibrariesIndexer {
   private final File indexFile;
   private final File stagingFolder;
   private File sketchbookLibrariesFolder;
+  
 
   public LibrariesIndexer(File preferencesFolder) {
     indexFile = new File(preferencesFolder, "library_index.json");
@@ -116,13 +117,13 @@ public class LibrariesIndexer {
       return;
 
     for (File subfolder : list) {
-      if (!BaseNoGui.isSanitaryName(subfolder.getName())) {
-        String mess = I18n.format(_("The library \"{0}\" cannot be used.\n"
+      if (!BaseNoGui.isSanitaryName(folderName)) {
+          String mess = I18n.format(_("The library \"{0}\" cannot be used.\n"
                         + "Library names must contain only basic letters and numbers.\n"
                         + "(ASCII only and no spaces, and it cannot start with a number)"),
-                subfolder.getName());
-        BaseNoGui.showMessage(_("Ignoring bad library name"), mess);
-        continue;
+                folderName);
+          BaseNoGui.showMessage(_("Ignoring bad library name"), mess);
+          continue;
       }
 
       try {
