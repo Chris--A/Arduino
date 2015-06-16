@@ -54,7 +54,7 @@ int Stream::timedPeek()
 
 // returns peek of the next digit in the stream or -1 if timeout
 // discards non-numeric characters
-int Stream::peekNextDigit( bool detectDecimal )
+int Stream::peekNextDigit(StreamParseOpt skipMode, bool detectDecimal )
 {
   int c;
   while (1) {
@@ -65,6 +65,17 @@ int Stream::peekNextDigit( bool detectDecimal )
         c >= '0' && c <= '9' ||
         detectDecimal && c == '.') return c;
 
+    switch( skipMode ){
+        case SKIP_NONE: return -1; // Fail code.
+        case SKIP_WHITESPACE:
+            switch( c ){
+                case ' ':
+                case '\t':
+                case '\r':
+                case '\n': break;
+                default: return -1; // Fail code.
+            }
+    }
     read();  // discard non-numeric
   }
 }
@@ -114,20 +125,20 @@ bool Stream::findUntil(char *target, size_t targetLen, char *terminator, size_t 
 // returns the first valid (long) integer value from the current position.
 // initial characters that are not digits (or the minus sign) are skipped
 // function is terminated by the first character that is not a digit.
-long Stream::parseInt()
+long Stream::parseInt(StreamParseOpt skipMode)
 {
-  return parseInt(NO_SKIP_CHAR); // terminate on first non-digit character (or timeout)
+  return parseInt(skipMode, NO_SKIP_CHAR); // terminate on first non-digit character (or timeout)
 }
 
 // as above but a given skipChar is ignored
 // this allows format characters (typically commas) in values to be ignored
-long Stream::parseInt(char skipChar)
+long Stream::parseInt(StreamParseOpt skipMode, char skipChar)
 {
   bool isNegative = false;
   long value = 0;
   int c;
 
-  c = peekNextDigit(false);
+  c = peekNextDigit(skipMode, false);
   // ignore non numeric leading characters
   if(c < 0)
     return 0; // zero returned if timeout
@@ -151,21 +162,21 @@ long Stream::parseInt(char skipChar)
 
 
 // as parseInt but returns a floating point value
-float Stream::parseFloat()
+float Stream::parseFloat(StreamParseOpt skipMode)
 {
-  return parseFloat(NO_SKIP_CHAR);
+  return parseFloat(skipMode, NO_SKIP_CHAR);
 }
 
 // as above but the given skipChar is ignored
 // this allows format characters (typically commas) in values to be ignored
-float Stream::parseFloat(char skipChar){
+float Stream::parseFloat(StreamParseOpt skipMode, char skipChar){
   bool isNegative = false;
   bool isFraction = false;
   long value = 0;
   char c;
   float fraction = 1.0;
 
-  c = peekNextDigit(true);
+  c = peekNextDigit(skipMode, true);
     // ignore non numeric leading characters
   if(c < 0)
     return 0; // zero returned if timeout

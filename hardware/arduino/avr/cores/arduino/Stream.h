@@ -35,6 +35,15 @@
 readBytesBetween( pre_string, terminator, buffer, length)
 */
 
+// This enumeration provides the lookahead options for parseInt(), parseFloat()
+// The rules set out here are used until either the first valid character is found
+// or a time out occurs due to lack of input.
+enum StreamParseOpt{
+    SKIP_ALL,       // All invalid characters are ignored.
+    SKIP_NONE,      // Nothing is skipped, and the stream is not touched unless the first waiting character is valid.
+    SKIP_WHITESPACE // Only tabs, spaces, line feeds & carriage returns are skipped.
+};
+
 class Stream : public Print
 {
   protected:
@@ -42,7 +51,7 @@ class Stream : public Print
     unsigned long _startMillis;  // used for timeout measurement
     int timedRead();    // private method to read stream with timeout
     int timedPeek();    // private method to peek stream with timeout
-    int peekNextDigit( bool detectDecimal ); // returns the next numeric digit in the stream or -1 if timeout
+    int peekNextDigit(StreamParseOpt skipMode, bool detectDecimal); // returns the next numeric digit in the stream or -1 if timeout
 
   public:
     virtual int available() = 0;
@@ -73,11 +82,11 @@ class Stream : public Print
   bool findUntil(uint8_t *target, size_t targetLen, char *terminate, size_t termLen) {return findUntil((char *)target, targetLen, terminate, termLen); }
 
 
-  long parseInt(); // returns the first valid (long) integer value from the current position.
+  long parseInt(StreamParseOpt skipMode = SKIP_ALL); // returns the first valid (long) integer value from the current position.
   // initial characters that are not digits (or the minus sign) are skipped
   // integer is terminated by the first character that is not a digit.
 
-  float parseFloat();               // float version of parseInt
+  float parseFloat(StreamParseOpt skipMode = SKIP_ALL);               // float version of parseInt
 
   size_t readBytes( char *buffer, size_t length); // read chars from stream into buffer
   size_t readBytes( uint8_t *buffer, size_t length) { return readBytes((char *)buffer, length); }
@@ -94,11 +103,11 @@ class Stream : public Print
   String readStringUntil(char terminator);
 
   protected:
-  long parseInt(char skipChar); // as above but the given skipChar is ignored
+  long parseInt(StreamParseOpt skipMode, char skipChar); // as above but the given skipChar is ignored
   // as above but the given skipChar is ignored
   // this allows format characters (typically commas) in values to be ignored
 
-  float parseFloat(char skipChar);  // as above but the given skipChar is ignored
+  float parseFloat(StreamParseOpt skipMode, char skipChar);  // as above but the given skipChar is ignored
 
   struct MultiTarget {
     const char *str;  // string you're searching for
