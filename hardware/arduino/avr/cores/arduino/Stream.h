@@ -44,6 +44,8 @@ enum StreamParseOpt{
     SKIP_WHITESPACE // Only tabs, spaces, line feeds & carriage returns are skipped.
 };
 
+#define NO_SKIP_CHAR  '\x01' // a char not found in a valid ASCII numeric field
+
 class Stream : public Print
 {
   protected:
@@ -81,12 +83,15 @@ class Stream : public Print
   bool findUntil(char *target, size_t targetLen, char *terminate, size_t termLen);   // as above but search ends if the terminate string is found
   bool findUntil(uint8_t *target, size_t targetLen, char *terminate, size_t termLen) {return findUntil((char *)target, targetLen, terminate, termLen); }
 
+  long parseInt(StreamParseOpt skipMode = SKIP_ALL, char skipChar = NO_SKIP_CHAR);
+  // returns the first valid (long) integer value from the current position.
+  // skipMode determines how parseInt looks ahead in the stream.
+  // See StreamParseOpt enumeration at the top of the file.
+  // Lookahead is terminated by the first character that is not a valid part of an integer.
+  // Once parsing commences, skipChar will be ignored in the stream.
 
-  long parseInt(StreamParseOpt skipMode = SKIP_ALL); // returns the first valid (long) integer value from the current position.
-  // initial characters that are not digits (or the minus sign) are skipped
-  // integer is terminated by the first character that is not a digit.
-
-  float parseFloat(StreamParseOpt skipMode = SKIP_ALL);               // float version of parseInt
+  float parseFloat(StreamParseOpt skipMode = SKIP_ALL, char skipChar = NO_SKIP_CHAR);
+  // float version of parseInt
 
   size_t readBytes( char *buffer, size_t length); // read chars from stream into buffer
   size_t readBytes( uint8_t *buffer, size_t length) { return readBytes((char *)buffer, length); }
@@ -104,12 +109,10 @@ class Stream : public Print
 
   protected:
   long parseInt(char skipChar) { return parseInt(SKIP_ALL, skipChar); }
-  long parseInt(StreamParseOpt skipMode, char skipChar); // as above but the given skipChar is ignored
-  // as above but the given skipChar is ignored
-  // this allows format characters (typically commas) in values to be ignored
-  
-  float parseFloat(char skipChar) { return parseFloat(SKIP_ALL, skipChar); }  
-  float parseFloat(StreamParseOpt skipMode, char skipChar);  // as above but the given skipChar is ignored
+  float parseFloat(char skipChar) { return parseFloat(SKIP_ALL, skipChar); }
+  // These overload exists for compatibility with any class that has derived
+  // Stream and used parseFloat/Int with a custom skip character. To keep
+  // the public API simple, these overload remains protected.
 
   struct MultiTarget {
     const char *str;  // string you're searching for
@@ -122,5 +125,5 @@ class Stream : public Print
   int findMulti(struct MultiTarget *targets, int tCount);
 };
 
-
+#undef NO_SKIP_CHAR
 #endif
