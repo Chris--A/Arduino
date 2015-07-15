@@ -101,10 +101,12 @@ class Stream : public Print
   String readStringUntil(char terminator);
 
   protected:
+  long parseInt(char skipChar) { return parseInt(SKIP_ALL, skipChar); }
   long parseInt(StreamParseOpt skipMode, char skipChar); // as above but the given skipChar is ignored
   // as above but the given skipChar is ignored
   // this allows format characters (typically commas) in values to be ignored
-
+  
+  float parseFloat(char skipChar) { return parseFloat(SKIP_ALL, skipChar); }  
   float parseFloat(StreamParseOpt skipMode, char skipChar);  // as above but the given skipChar is ignored
 
   struct MultiTarget {
