@@ -1,4 +1,4 @@
-## **EEPROM Library V2.0** for Arduino
+## **EEPROM Library V2.1** for Arduino
 
 **Written by:** _Christopher Andrews_.  
 
@@ -30,7 +30,7 @@ You can view all the examples [here](examples/).
 
 #### **`EEPROM.read( address )`** [[_example_]](examples/eeprom_read/eeprom_read.ino)
 
-This function allows you to read a single byte of data from the eeprom.
+This function allows you to read a single byte of data from the EEPROM.
 Its only parameter is an `int` which should be set to the address you wish to read.
 
 The function returns an `unsigned char` containing the value read.
@@ -51,7 +51,7 @@ This function does not return any value.
 #### **`EEPROM.readBit( address, bit )`** [[_example_]](examples/eeprom_bits/eeprom_bits.ino)
 
 This function allows you to read a single bit value from the EEPROM.
-It requires two inputs: an `int` addressing the EEPROM cell, and an `unsigned char` specifiying the bit to read (in a range 0 - 7).
+It requires two inputs: an `int` addressing the EEPROM cell, and an `unsigned char` specifying the bit to read (in a range 0 - 7).
 
 The function returns a `bool` containing the value of the bit read.
 
@@ -62,21 +62,45 @@ Three parameters are needed. The first is an `int` containing the address that i
 
 This function does not return any value.
 
-#### **`EEPROM.get( address, object )`** [[_example_]](examples/eeprom_get/eeprom_get.ino)
-
+#### **`EEPROM.get( address, object )`** [[_example 1_]](examples/eeprom_get/eeprom_get.ino), [[_example 2_]](examples/eeprom_arrays/eeprom_arrays.ino)
+#### **`EEPROM.get( address, pointer, count )`** [[_example_]](examples/eeprom_memory_blocks/eeprom_memory_blocks.ino)
+- **Two parameter version (`EEPROM.get( address, object )`):**  
 This function will retrieve any object from the EEPROM.
 Two parameters are needed to call this function. The first is an `int` containing the address that is to be read, and the second is the object you would like to read.
+ 
+  This function returns a reference to the `object` passed in. It does not need to be used and is only returned for convenience.
 
-This function returns a reference to the `object` passed in. It does not need to be used and is only returned for conveience.
+- **Three parameter version (`EEPROM.get( address, pointer, count )`):**  
+`address`: Location of where to access the EEPROM.  
+`pointer`: Location in RAM to access.  
+`count`:   Count of elements to read, take care to note that this is **NOT** a count of bytes, but the number of objects/elements to read. The size of an element is determined by the type of the pointer object passed to `pointer`. 
 
-#### **`EEPROM.put( address, object )`** [[_example_]](examples/eeprom_put/eeprom_put.ino)
+  To read in a count of bytes, simply cast your pointer to a `char*` or `byte*`:  
+`EEPROM.get( address, (char*) pointer, count );`
 
+#### **`EEPROM.put( address, object )`** [[_example 1_]](examples/eeprom_put/eeprom_put.ino), [[_example 2_]](examples/eeprom_arrays/eeprom_arrays.ino)
+#### **`EEPROM.put( address, pointer, count )`** [[_example_]](examples/eeprom_memory_blocks/eeprom_memory_blocks.ino)
+- **Two parameter version (`EEPROM.put( address, object )`):**  
 This function will write any object to the EEPROM.
 Two parameters are needed to call this function. The first is an `int` containing the address that is to be written, and the second is the object you would like to write.
 
-This function uses the _update_ method to write its data, and therefore only rewrites changed cells.
+  This function accepts all types of objects, however `object` cannot be a pointer (disallowed by design). Writing a pointer (address) is not a safe thing to do and is most likely not what the user intended. To write a block of data, or part of an array, use the three parameter version explained below. Here is a summary of what is suitable:
+  - Primitive types (`int`, `char`, `bool`, etc...).
+  - Structures/Classes.
+  - Arrays
+  - Multi-dimensional Arrays
 
-This function returns a reference to the `object` passed in. It does not need to be used and is only returned for conveience.
+  This function uses the _update_ method to write its data, and therefore only rewrites changed cells.
+
+  This function returns a reference to the `object` passed in. It does not need to be used and is only returned for convenience.
+ 
+- **Three parameter version (`EEPROM.put( address, pointer, count )`):**  
+`address`: Location of where to access the EEPROM.  
+`pointer`: Location in RAM to access.  
+`count`:   Count of elements to write, take care to note that this is **NOT** a count of bytes, but the number of objects/elements to write. The size of an element is determined by the type of the pointer object passed to `pointer`.
+
+  To write out a count of bytes, simply cast your pointer to a `char*` or `byte*`:  
+`EEPROM.put( address, (char*) pointer, count );`
 
 #### **Subscript operator: `EEPROM[address]`** [[_example_]](examples/eeprom_crc/eeprom_crc.ino)
 
@@ -182,4 +206,4 @@ This is useful for STL objects, custom iteration and C++11 style ranged for loop
 This function returns an `EEPtr` pointing at the location after the last EEPROM cell.  
 Used with `begin()` to provide custom iteration.
 
-**Note:** The `EEPtr` returned is invalid as it is out of range. Infact the hardware causes wrapping of the address (overflow) and `EEPROM.end()` actually references the first EEPROM cell.
+**Note:** The `EEPtr` returned is invalid as it is out of range. In fact the hardware causes wrapping of the address (overflow) and `EEPROM.end()` actually references the first EEPROM cell.

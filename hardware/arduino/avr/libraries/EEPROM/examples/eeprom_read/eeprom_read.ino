@@ -47,7 +47,7 @@ void loop() {
 
   /***
     As the EEPROM sizes are powers of two, wrapping (preventing overflow) of an
-    EEPROM address is also doable by a bitwise and of the length - 1.
+    EEPROM address is also doable by a bitwise 'and' of the length - 1.
 
     ++address &= EEPROM.length() - 1;
   ***/

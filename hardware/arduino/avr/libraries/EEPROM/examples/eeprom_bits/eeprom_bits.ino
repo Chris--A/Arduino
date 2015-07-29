@@ -4,8 +4,6 @@
 	This example sketch is highlighting the usage 
 	of EEPROM.readBit() and EEPROM.writeBit().
     
-	
-	
     Written by Christopher Andrews 2015
     Released under MIT licence.
 ***/
@@ -23,9 +21,24 @@ void setup() {
     ; // wait for serial port to connect. Needed for Leonardo boards only.
   }
   
+  /***
+    Writing and reading individual bits from EEPROM bytes.
+    
+    There are two functions provided specifically for dealing with bits.
+	
+    EEPROM.readBit( address, bit index );
+    EEPROM.writeBit( address, bit index, value );
+    
+    address:    The address of the EEPROM cell requested to read or write from.
+    bit index:  A zero based index of the bit to write from 0 - 7 (Each cell is one byte of eight bits).
+    value:      The value to set the bit to: a boolean either true or false (writeBit only). 
+  
+  ***/
+  
   //Clear first cell so we can see the changes.
   EEPROM.update( address, 0 );
   
+  //Print original value.
   Serial.print( "Contents of cell 0: " );
   Serial.println( EEPROM.read( address ), HEX );
   delay( 500 );
@@ -49,5 +62,5 @@ void setup() {
 }
 
 void loop(){
-
+ //Empty loop
 }

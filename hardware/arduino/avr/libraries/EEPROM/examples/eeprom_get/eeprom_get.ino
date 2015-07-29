@@ -52,7 +52,8 @@ struct MyObject {
 };
 
 void secondTest() {
-  int eeAddress = sizeof(float); //Move address to the next byte after float 'f'.
+  int eeAddress = sizeof(float); //Set address to the next byte after float 'f'. 
+                                 //Note that this is a local variable and is unique to the var eeAddress used in 'void setup()'.
 
   MyObject customVar; //Variable to store custom object read from EEPROM.
   EEPROM.get(eeAddress, customVar);
