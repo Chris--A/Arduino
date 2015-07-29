@@ -14,58 +14,59 @@
 #include <EEPROM.h>
 
 /** the current address in the EEPROM (i.e. which byte we're going to write to next) **/
-int address = 0;
+int  address = 0;  // As EEPROM sizes are larger than 256 bytes, we 
+                   // need to use an int to address the entire EEPROM
+
+/***
+  To demonstrate the update feature, a counter is used to provide
+  a simple data set for storage. As the range of a byte fits into
+  EEPROM sizes neatly, it provides a repeating set of values.
+***/
+byte coutner = 0;  // Only 0 - 255 (256 values).
 
 void setup() {
-  /** EMpty setup **/
+  /** Empty setup **/
 }
 
 void loop() {
-  /***
-    need to divide by 4 because analog inputs range from
-    0 to 1023 and each byte of the EEPROM can only hold a
-    value from 0 to 255.
-  ***/
-  int val = analogRead(0) / 4;
 
+  //Write the data using the update() method.
+  EEPROM.update(address, counter);
+  
   /***
-    Update the particular EEPROM cell.
-    these values will remain there when the board is
-    turned off.
-  ***/
-  EEPROM.update(address, val);
-
-  /***
-    The function EEPROM.update(address, val) is equivalent to the following:
-
-    if( EEPROM.read(address) != val ){
-      EEPROM.write(address, val);
+    The function EEPROM.update(address, value) is equivalent to the following:
+  
+    if( EEPROM.read(address) != value ){
+      EEPROM.write(address, value);
     }
   ***/
-
-
-  /***
-    Advance to the next address, when at the end restart at the beginning.
-
-    Larger AVR processors have larger EEPROM sizes, E.g:
-    - Arduno Duemilanove: 512b EEPROM storage.
-    - Arduino Uno:        1kb EEPROM storage.
-    - Arduino Mega:       4kb EEPROM storage.
-
-    Rather than hard-coding the length, you should use the pre-provided length function.
-    This will make your code portable to all AVR processors.
-  ***/
+  
+  //Advance to the next address, and increment the counter.
   address = address + 1;
-  if (address == EEPROM.length()) {
-    address = 0;
+  
+  if( counter == 255 ){
+    counter = 0;
+  }else{
+    counter = counter + 1;
   }
 
   /***
-    As the EEPROM sizes are powers of two, wrapping (preventing overflow) of an
-    EEPROM address is also doable by a bitwise and of the length - 1.
+    Wrapping the EEPROM address.
 
-    ++address &= EEPROM.length() - 1;
+    Larger AVR processors have larger EEPROM sizes, E.g:
+    - Arduino Duemilanove: 512b EEPROM storage.
+    - Arduino Uno:         1kb  EEPROM storage.
+    - Arduino Mega:        4kb  EEPROM storage.
+
+    Rather than hard-coding the length, you should use the pre-provided length function.
+    This will make your code portable to all AVR processors that support EEPROM storage.
+
   ***/
 
-  delay(100);
+  if( address == EEPROM.length() ){
+    address = 0;
+  }
+
+  //Slow things down a bit.
+  delay(300);
 }

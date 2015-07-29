@@ -51,7 +51,15 @@ void setup() {
     idx++;
   } while (idx < EEPROM.length());
 
-
+  
+  /***
+    C++11 specific iteration using a ranged for loop.
+  ***/
+  
+  for (auto cell : EEPROM) {
+	cell += 1; //Increment the cell contents.
+  }
+  
 } //End of setup function.
 
 void loop() {}
