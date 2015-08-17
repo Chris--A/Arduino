@@ -32,24 +32,17 @@
 
 #include "wiring_private.h"
 
-static void nothing(void) {
-}
+static void nothing(void) {}
 
-static volatile voidFuncPtr intFunc[EXTERNAL_NUM_INTERRUPTS] = {
-#if defined(__AVR_ATmega32U4__) 
-    nothing, // 3
-    nothing, // 4
-#elif (defined(EICRA) && defined(EICRB) && defined(EIMSK))
-    nothing, // 3
-    nothing, // 4
-    nothing, // 5
-    nothing, // 6
-    nothing, // 7
-#endif
-    nothing, // 0
-    nothing, // 1
-    nothing  // 2
+struct cbHandler{
+  cbHandler() : ptr(nothing) {}
+  void operator =( const voidFuncPtr in ) volatile { ptr = in; }
+  void operator ()() volatile { ptr(); }
+  voidFuncPtr ptr;
 };
+
+static volatile cbHandler intFunc[EXTERNAL_NUM_INTERRUPTS] = {};
+
 // volatile static voidFuncPtr twiIntFunc;
 
 void attachInterrupt(uint8_t interruptNum, void (*userFunc)(void), int mode) {
