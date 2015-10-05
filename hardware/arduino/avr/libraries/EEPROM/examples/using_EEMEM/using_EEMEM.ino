@@ -48,23 +48,24 @@ void setup() {
   
   /***
     Using the standard get() and put() EEPROM methods, all that is
-	needed is a temporary storage space. By taking the address of
-	your variable marked with EEMEM, you can easily retrieve its
-	contents.
+  needed is a temporary storage space. By taking the address of
+  your variable marked with EEMEM, you can easily retrieve its
+  contents.
   ***/
   
   // Read value from EEPROM using the address assigned automatically
   // when the declaration is used with EEMEM.
-  int result;
-  EEPROM.get(&value, result);
+  int result = EEPROM.get(&value);
   
-  float frac;
-  EEPROM.get(&fraction, frac);
+  float frac = EEPROM.get(&fraction);
   
-  //Write to the address assigned to fraction.
+  //Using the standard usage of EEPROM.put() allows you to write to a variable marked with EEMEM.
+  result = random(10);
+  EEPROM.put(&value, result);
+  
   frac = 3.14f;
   EEPROM.put(&fraction, frac);
-  EEPROM.put(&fraction, 3.14f);
+  EEPROM.put(&fraction, 3.14f);  //You can also directly write literal values without needing temporary storage.
   
   /***
     Using a structure with EEMEM.
@@ -78,8 +79,7 @@ void setup() {
 
   //Read the value and assign the result directly to the IPAddress
   //object (It accepts unsigned long values as an input).
-  unsigned long ipData;
-  ip = EEPROM.get(&eeConfig.ip, ipData);
+  ip = EEPROM.get(&eeConfig.ip);
   
   Serial.print("IP address is: ");
   Serial.println(ip);

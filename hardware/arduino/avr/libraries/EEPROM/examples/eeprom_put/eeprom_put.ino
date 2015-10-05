@@ -9,6 +9,12 @@
     the put method will use update semantics. As in a byte
     will only be written to the EEPROM if the data is actually
     different.
+	
+	The put() & get() methods will not allow you to read or write
+	pointers. This is intentional as it is not good practice to store
+	addresses to things like PROGMEM, functions, or SRAM. The addresses
+	could change by simply recompiling your code with a different library
+	or compiler which would render the stored address to become invalid.
 
     Written by Christopher Andrews 2015
     Released under MIT licence.
