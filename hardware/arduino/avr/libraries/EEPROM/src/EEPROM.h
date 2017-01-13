@@ -181,16 +181,16 @@ struct EEPtr{
     //Pointer read/write.
     operator int() const                { return index; }
     EEPtr &operator=( int in )          { return index = in, *this; }
-    EERef operator[]( int idx )         { return index + idx; }
+    EERef operator[]( int idx ) const   { return index + idx; }
 
     //Iterator functionality.
-    bool operator!=( const EEPtr &ptr ) { return index != ptr.index; }
-    EEPtr& operator+=( int idx )        { return index += idx, *this; }
-    EEPtr& operator-=( int idx )        { return index -= idx, *this; }
+    bool operator!=( const EEPtr &ptr ) const { return index != ptr.index; }
+    EEPtr& operator+=( int idx )              { return index += idx, *this; }
+    EEPtr& operator-=( int idx )              { return index -= idx, *this; }
 
     //Dreference & member access.
-    EERef operator*()                   { return index; }
-    EERef *operator->()                 { return (EERef*) this; }
+    EERef operator*()             const { return index; }
+    EERef *operator->()           const { return (EERef*) this; }
 
     // Prefix & Postfix increment/decrement
     EEPtr& operator++()                 { return ++index, *this; }
