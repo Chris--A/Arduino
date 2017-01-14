@@ -101,33 +101,41 @@ struct EERef{
 struct EEBit{
 
     //Constructor, use by passing in index of EEPROM byte, then index of bit to read.
-    EEBit( int index, uint8_t bidx )
-        : ref( index ), mask( 0x01 << bidx ) {}
+    EEBit( EEBitPtr ptr)
+        : ptr( ptr ) {}
 
     //Modifier functions.
-    EEBit &setIndex( uint8_t bidx )          { return mask = (0x01 << bidx), *this; }
     EEBit &set()                             { return *this = true; }
     EEBit &clear()                           { return *this = false; }
 
     //Read/write functions.
-    operator bool() const                    { return ref & mask; }
-    EEBit &operator =( const EEBit &copy )   { return *this = ( const bool ) copy; }
+    operator bool() const                    { return *ptr.ref & ptr.mask; }
+    EEBit &operator =( const EEBit &copy )   { return *this = ( bool ) copy; }
 
     EEBit &operator =( const bool &copy ){
-        if( copy )  ref |= mask;
-        else  ref &= ~mask;
+        EERef cell = *ptr.ref;
+        if( copy )  cell |= ptr.mask;
+        else  cell &= ~mask;
         return *this;
     }
 
+    const EEBitPtr ptr;
+}
+
+struct EEBitPtr {
+    //Constructor, use by passing in index of EEPROM byte, then index of bit to read.
+    EEBitPtr( int index, uint8_t bidx )
+        : ptr( index ), mask( 0x01 << bidx ) {}
+
     //Iterator functionality.
-    EEBit& operator*()                  { return *this; }
-    bool operator==( const EEBit &bit ) { return (mask == bit.mask) && (ref.index == bit.ref.index); }
-    bool operator!=( const EEBit &bit ) { return !(*this == bit); }
+    EEBit operator*()                      const { return EEBit(*this); }
+    bool operator==( const EEBitPtr &bit ) const { return (mask == bit.mask) && (ptr == bit.ptr); }
+    bool operator!=( const EEBitPtr &bit ) const { return !(*this == bit); }
 
     //Prefix & Postfix increment/decrement
     EEBit& operator++(){
         if( mask & 0x80 ){
-            ++ref.index;
+            ++ptr;
             mask = 0x01;
         }else{
             mask <<= 1;
@@ -137,7 +145,7 @@ struct EEBit{
 
     EEBit& operator--(){
         if( mask & 0x01 ){
-            --ref.index;
+            --ptr;
             mask = 0x80;
         }else{
             mask >>= 1;
@@ -155,14 +163,17 @@ struct EEBit{
         return --(*this), cpy;
     }
 
-    EERef ref;     //Reference to EEPROM cell.
+    EEPtr ptr;     //Reference to EEPROM cell.
     uint8_t mask;  //Mask of bit to read/write.
 };
 
+//Deferred definition till EEBitPtr becomes available.
+inline EEBitPtr EEBit::operator&() const { return ptr; }
+
 //Deferred definition till EEBit becomes available.
-inline EEBit EERef::operator[]( const int bidx ) { return EEBit( index, bidx ); }
-inline EEBit EERef::begin()                      { return EEBit( index, 0 ); }
-inline EEBit EERef::end()                        { return EEBit( index + 1, 0 ); }
+inline EEBit EERef::operator[]( const int bidx ) { return *EEBitPtr( index, bidx ); }
+inline EEBitPtr EERef::begin()                   { return EEBitPtr( index, 0 ); }
+inline EEBitPtr EERef::end()                     { return EEBitPtr( index + 1, 0 ); }
 
 
 /***
